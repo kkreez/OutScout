@@ -971,19 +971,13 @@ function Step3({ data, setData, onBack, onNext }) {
 }
 
 /* ─── Step 4: Location & Final ─── */
-function Step4({ data, setData, onBack, onGenerate, loading, error, hasApiKey }) {
+function Step4({ data, setData, onBack, onGenerate, loading, error }) {
   return (
     <div>
       <StepDots current={3} total={4} />
       <p className="section-eyebrow">Step 4 of 4</p>
       <h1 className="section-title display">Almost <span style={{fontStyle:'italic',color:'var(--amber)'}}>there</span></h1>
       <p className="section-sub">Just a few last details so we can tailor suggestions to your exact context.</p>
-
-      {!hasApiKey && (
-        <div className="api-key-banner">
-          <strong>Note:</strong> To generate recommendations, you need an Anthropic API key. Get one free at <a href="https://console.anthropic.com" target="_blank" style={{color:'var(--amber)',textDecoration:'underline'}}>console.anthropic.com</a>
-        </div>
-      )}
 
       <div className="field-block">
         <span className="field-label">City / neighborhood you're dining in</span>
@@ -1018,8 +1012,8 @@ function Step4({ data, setData, onBack, onGenerate, loading, error, hasApiKey })
         <button
           className="btn-generate"
           onClick={onGenerate}
-          disabled={loading || !data.location.trim() || !hasApiKey}
-          title={!hasApiKey ? 'API key required' : ''}
+          disabled={loading || !data.location.trim()}
+          title=""
         >
           {loading ? (
             <>
@@ -1117,7 +1111,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [recs, setRecs] = useState(null);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('anthropic_api_key') || '');
+  const [apiKey] = useState('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');
 
   const [profile, setProfile] = useState({
     cuisines: [],
@@ -1170,7 +1164,7 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
 
   const generate = async () => {
     if (!apiKey.trim()) {
-      setError('Please set your Anthropic API key first');
+      setError('API key not configured');
       return;
     }
 
@@ -1218,14 +1212,6 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
     setError('');
   };
 
-  const handleSetApiKey = () => {
-    const key = prompt('Enter your Anthropic API key:');
-    if (key) {
-      setApiKey(key);
-      localStorage.setItem('anthropic_api_key', key);
-    }
-  };
-
   return (
     <div className="app-shell">
       <header className="header">
@@ -1233,16 +1219,6 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
         {step < 4 && <span className="header-pill">AI-Powered Dining</span>}
         {step === 4 && (
           <button className="btn-restart" onClick={restart}>New search</button>
-        )}
-        {step < 4 && (
-          <button 
-            className="header-pill" 
-            style={{cursor:'pointer',background:'var(--ink-faint)',color:'var(--white)',border:'none',padding:'6px 12px'}}
-            onClick={handleSetApiKey}
-            title="Click to add API key"
-          >
-            {apiKey ? '✓ API Key Set' : '+ Add API Key'}
-          </button>
         )}
       </header>
 
@@ -1278,7 +1254,6 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
             onGenerate={generate}
             loading={loading}
             error={error}
-            hasApiKey={!!apiKey.trim()}
           />
         )}
         {step === 4 && recs && (
