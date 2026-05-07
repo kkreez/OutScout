@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TasteCraft — Your Personal Dining Curator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --amber: #D4892A;
+    --amber-light: #F2C97A;
+    --amber-pale: #FBF0DC;
+    --clay: #C4614A;
+    --clay-pale: #F7EAE6;
+    --sage: #5A7A5C;
+    --sage-pale: #EAF0E7;
+    --ink: #1C1612;
+    --ink-mid: #3D3328;
+    --ink-muted: #7A6E63;
+    --ink-faint: #B8AFA5;
+    --paper: #FBF8F4;
+    --paper-warm: #F5F0E8;
+    --white: #FFFFFF;
+    --border: rgba(60,45,30,0.12);
+    --border-strong: rgba(60,45,30,0.22);
+    --shadow-card: 0 2px 20px rgba(60,30,10,0.08);
+    --shadow-lift: 0 8px 40px rgba(60,30,10,0.14);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-texture {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% -10%, rgba(212,137,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 110%, rgba(196,97,74,0.07) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root { position: relative; z-index: 1; }
+
+  /* ── Typography ── */
+  .display { font-family: 'Playfair Display', serif; }
+  .display-italic { font-family: 'Playfair Display', serif; font-style: italic; }
+
+  /* ── Layout ── */
+  .app-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(251,248,244,0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+
+  .logo span {
+    color: var(--amber);
+    font-style: italic;
+  }
+
+  .header-pill {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--amber);
+    background: var(--amber-pale);
+    padding: 4px 12px;
+    border-radius: 100px;
+    border: 1px solid rgba(212,137,42,0.2);
+  }
+
+  .main-content {
+    flex: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Step progress ── */
+  .step-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+    transition: all 0.3s;
+  }
+  .step-dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: var(--amber);
+  }
+  .step-dot.done { background: var(--sage); }
+
+  /* ── Section heading ── */
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .section-sub {
+    font-size: 15px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  /* ── Cards / pill selectors ── */
+  .pill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .pill {
+    padding: 9px 18px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--white);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink-mid);
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .pill:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: var(--amber-pale);
+  }
+
+  .pill.selected {
+    border-color: var(--amber);
+    background: var(--amber);
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .pill.selected-sage {
+    border-color: var(--sage);
+    background: var(--sage);
+    color: var(--white);
+  }
+
+  /* ── Cuisine card grid ── */
+  .cuisine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .cuisine-card {
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .cuisine-card:hover {
+    border-color: var(--amber);
+    box-shadow: var(--shadow-card);
+    transform: translateY(-2px);
+  }
+
+  .cuisine-card.selected {
+    border-color: var(--amber);
+    border-width: 2px;
+    background: var(--amber-pale);
+  }
+
+  .cuisine-emoji {
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .cuisine-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-mid);
+  }
+
+  /* ── Text inputs ── */
+  .input-area {
+    width: 100%;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .input-area:focus { border-color: var(--amber); }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tag-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .tag-input {
+    width: 100%;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .tag-input:focus { border-color: var(--amber); }
+
+  .tag-add-btn {
+    padding: 12px 20px;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s;
+    white-space: nowrap;
+  }
+
+  .tag-add-btn:hover { background: var(--amber); }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .tag-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--ink-mid);
+  }
+
+  .tag-remove {
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 15px;
+    line-height: 1;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .tag-remove:hover { color: var(--clay); }
+
+  /* ── Slider ── */
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 16px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .slider-label strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--amber);
+    height: 4px;
+    cursor: pointer;
+  }
+
+  /* ── Navigation buttons ── */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    gap: 12px;
+  }
+
+  .btn-back {
+    padding: 12px 24px;
+    background: transparent;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .btn-back:hover {
+    color: var(--ink);
+    border-color: var(--ink-mid);
+  }
+
+  .btn-next {
+    padding: 13px 32px;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-next:hover:not(:disabled) {
+    background: var(--amber);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(212,137,42,0.3);
+  }
+
+  .btn-next:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-generate {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, var(--amber) 0%, #C4793A 100%);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-generate:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(212,137,42,0.35);
+  }
+
+  .btn-generate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .field-block { margin-top: 24px; }
+
+  /* ── Results ── */
+  .results-header {
+    margin-bottom: 36px;
+  }
+
+  .results-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .results-chip {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+
+  .chip-amber { background: var(--amber-pale); color: #8A5010; }
+  .chip-sage { background: var(--sage-pale); color: #2E5630; }
+  .chip-clay { background: var(--clay-pale); color: #823226; }
+
+  .rec-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .rec-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 28px;
+    box-shadow: var(--shadow-card);
+    transition: all 0.22s;
+    animation: slideUp 0.4s ease both;
+  }
+
+  .rec-card:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+    border-color: var(--amber);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .rec-card:nth-child(2) { animation-delay: 0.1s; }
+  .rec-card:nth-child(3) { animation-delay: 0.2s; }
+  .rec-card:nth-child(4) { animation-delay: 0.3s; }
+  .rec-card:nth-child(5) { animation-delay: 0.4s; }
+
+  .rec-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .rec-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--amber-light);
+    line-height: 1;
+    min-width: 36px;
+  }
+
+  .rec-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    flex: 1;
+  }
+
+  .rec-match {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sage);
+    background: var(--sage-pale);
+    padding: 4px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .rec-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 14px;
+  }
+
+  .rec-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: var(--paper-warm);
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+  }
+
+  .rec-reason {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    margin-top: 4px;
+  }
+
+  .rec-highlight {
+    font-size: 13px;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+    color: var(--amber);
+    margin-top: 10px;
+  }
+
+  /* ── Loading ── */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 20px;
+  }
+
+  .loading-ring {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-size: 15px;
+    color: var(--ink-muted);
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.6;
+  }
+
+  .loading-hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  /* ── Restart ── */
+  .btn-restart {
+    padding: 11px 24px;
+    background: transparent;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .btn-restart:hover {
+    color: var(--ink);
+    border-color: var(--ink-mid);
+  }
+
+  /* ── Error ── */
+  .error-banner {
+    padding: 14px 18px;
+    background: #FEF2F0;
+    border: 1px solid rgba(196,97,74,0.25);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--clay);
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+
+  .api-key-banner {
+    padding: 16px 18px;
+    background: var(--amber-pale);
+    border: 1px solid rgba(212,137,42,0.3);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .api-key-banner strong { color: var(--amber); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .header { padding: 16px 20px; }
+    .main-content { padding: 32px 16px 60px; }
+    .section-title { font-size: 26px; }
+    .cuisine-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    .rec-card { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-texture"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const CUISINES = [
+  { id: 'italian', label: 'Italian', emoji: '🍝' },
+  { id: 'japanese', label: 'Japanese', emoji: '🍣' },
+  { id: 'mexican', label: 'Mexican', emoji: '🌮' },
+  { id: 'indian', label: 'Indian', emoji: '🍛' },
+  { id: 'thai', label: 'Thai', emoji: '🍜' },
+  { id: 'french', label: 'French', emoji: '🥐' },
+  { id: 'chinese', label: 'Chinese', emoji: '🥟' },
+  { id: 'mediterranean', label: 'Mediterranean', emoji: '🫒' },
+  { id: 'american', label: 'American', emoji: '🍔' },
+  { id: 'korean', label: 'Korean', emoji: '🥩' },
+  { id: 'middle-eastern', label: 'Middle Eastern', emoji: '🧆' },
+  { id: 'vietnamese', label: 'Vietnamese', emoji: '🍲' },
+];
+
+const DIETARY = [
+  'Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher',
+  'Dairy-Free', 'Nut-Free', 'Low-Carb / Keto', 'No Restrictions',
+];
+
+const VIBES = [
+  'Romantic date night', 'Casual with friends', 'Family-friendly',
+  'Business lunch', 'Solo dining', 'Celebration / special occasion',
+  'Quick & convenient', 'Long leisurely meal',
+];
+
+const SOCIAL_INTERESTS = [
+  'Farm-to-table', 'Hidden gems', 'Celeb chef spots', 'Michelin-starred',
+  'Street food', 'Rooftop / scenic view', 'Live music', 'Trendy & Instagrammable',
+  'Cozy & intimate', 'Late-night bites', 'Brunch culture', 'Wine / craft cocktails',
+];
+
+function StepDots({ current, total }) {
+  return (
+    <div className="step-progress">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`step-dot ${i === current ? 'active' : i < current ? 'done' : ''}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PillSelect({ options, selected, onToggle, max, className = '' }) {
+  return (
+    <div className={`pill-grid ${className}`}>
+      {options.map(opt => {
+        const isSelected = selected.includes(opt);
+        const isDisabled = !isSelected && max && selected.length >= max;
+        return (
+          <button
+            key={opt}
+            className={`pill ${isSelected ? 'selected' : ''}`}
+            style={isDisabled ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+            onClick={() => !isDisabled && onToggle(opt)}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TagInput({ tags, onAdd, onRemove, placeholder }) {
+  const [val, setVal] = useState('');
+  const add = () => {
+    const trimmed = val.trim();
+    if (trimmed && !tags.includes(trimmed)) { onAdd(trimmed); setVal(''); }
+  };
+  return (
+    <div>
+      <div className="input-row">
+        <div className="tag-input-wrapper">
+          <input
+            className="tag-input"
+            value={val}
+            onChange={e => setVal(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && add()}
+            placeholder={placeholder}
+          />
+        </div>
+        <button className="tag-add-btn" onClick={add}>Add</button>
+      </div>
+      {tags.length > 0 && (
+        <div className="tag-list">
+          {tags.map(tag => (
+            <span key={tag} className="tag-item">
+              {tag}
+              <button className="tag-remove" onClick={() => onRemove(tag)}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Step 1: Cuisine & Dietary ─── */
+function Step1({ data, setData, onNext }) {
+  const toggle = (list, val) => {
+    const key = list;
+    const curr = data[key];
+    setData(prev => ({
+      ...prev,
+      [key]: curr.includes(val) ? curr.filter(x => x !== val) : [...curr, val],
+    }));
+  };
+
+  return (
+    <div>
+      <StepDots current={0} total={4} />
+      <p className="section-eyebrow">Step 1 of 4</p>
+      <h1 className="section-title display">What do you <span style={{fontStyle:'italic',color:'var(--amber)'}}>love</span> to eat?</h1>
+      <p className="section-sub">Select your favorite cuisines and any dietary requirements we should know about.</p>
+
+      <div className="field-block">
+        <span className="field-label">Favorite cuisines (pick any)</span>
+        <div className="cuisine-grid">
+          {CUISINES.map(c => (
+            <div
+              key={c.id}
+              className={`cuisine-card ${data.cuisines.includes(c.id) ? 'selected' : ''}`}
+              onClick={() => toggle('cuisines', c.id)}
+            >
+              <span className="cuisine-emoji">{c.emoji}</span>
+              <span className="cuisine-label">{c.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Dietary preferences</span>
+        <PillSelect
+          options={DIETARY}
+          selected={data.dietary}
+          onToggle={val => toggle('dietary', val)}
+        />
+      </div>
+
+      <div className="nav-row">
+        <div />
+        <button
+          className="btn-next"
+          onClick={onNext}
+          disabled={data.cuisines.length === 0}
+        >
+          Continue →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Step 2: Past Experiences ─── */
+function Step2({ data, setData, onBack, onNext }) {
+  const [spendVal, setSpendVal] = useState(data.avgSpend || 50);
+
+  const updateSpend = val => {
+    setSpendVal(val);
+    setData(prev => ({ ...prev, avgSpend: val }));
+  };
+
+  const spendLabel = v => {
+    if (v <= 20) return 'Budget ($)';
+    if (v <= 45) return 'Casual ($$)';
+    if (v <= 80) return 'Mid-range ($$$)';
+    return 'Fine dining ($$$$)';
+  };
+
+  return (
+    <div>
+      <StepDots current={1} total={4} />
+      <p className="section-eyebrow">Step 2 of 4</p>
+      <h1 className="section-title display">Your dining <span style={{fontStyle:'italic',color:'var(--amber)'}}>history</span></h1>
+      <p className="section-sub">Tell us about places you've visited and what made them memorable — or not.</p>
+
+      <div className="field-block">
+        <span className="field-label">Restaurants you've loved (press Enter or Add)</span>
+        <TagInput
+          tags={data.lovedPlaces}
+          onAdd={val => setData(prev => ({ ...prev, lovedPlaces: [...prev.lovedPlaces, val] }))}
+          onRemove={val => setData(prev => ({ ...prev, lovedPlaces: prev.lovedPlaces.filter(x => x !== val) }))}
+          placeholder="e.g. Nobu, The French Laundry, Joe's Pizza…"
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Dishes or ingredients you always order</span>
+        <TagInput
+          tags={data.favDishes}
+          onAdd={val => setData(prev => ({ ...prev, favDishes: [...prev.favDishes, val] }))}
+          onRemove={val => setData(prev => ({ ...prev, favDishes: prev.favDishes.filter(x => x !== val) }))}
+          placeholder="e.g. truffle pasta, spicy tuna roll, lamb chops…"
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Anything you actively dislike or avoid?</span>
+        <textarea
+          className="input-area"
+          value={data.dislikes}
+          onChange={e => setData(prev => ({ ...prev, dislikes: e.target.value }))}
+          placeholder="e.g. very loud spaces, overly sweet desserts, chains, food courts…"
+          rows={3}
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Typical spending per person</span>
+        <div className="slider-row">
+          <div className="slider-label">
+            <span>Budget</span>
+            <strong>${spendVal} — {spendLabel(spendVal)}</strong>
+            <span>Fine dining</span>
+          </div>
+          <input
+            type="range" min={10} max={150} step={5}
+            value={spendVal}
+            onChange={e => updateSpend(Number(e.target.value))}
+          />
+        </div>
+      </div>
+
+      <div className="nav-row">
+        <button className="btn-back" onClick={onBack}>← Back</button>
+        <button className="btn-next" onClick={onNext}>Continue →</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Step 3: Lifestyle & Social ─── */
+function Step3({ data, setData, onBack, onNext }) {
+  const toggle = (list, val) => {
+    const curr = data[list];
+    setData(prev => ({
+      ...prev,
+      [list]: curr.includes(val) ? curr.filter(x => x !== val) : [...curr, val],
+    }));
+  };
+
+  return (
+    <div>
+      <StepDots current={2} total={4} />
+      <p className="section-eyebrow">Step 3 of 4</p>
+      <h1 className="section-title display">Your <span style={{fontStyle:'italic',color:'var(--amber)'}}>vibe</span> & lifestyle</h1>
+      <p className="section-sub">Help us understand the experience you're after — beyond just the food.</p>
+
+      <div className="field-block">
+        <span className="field-label">What kind of dining occasions are you planning for?</span>
+        <PillSelect
+          options={VIBES}
+          selected={data.vibes}
+          onToggle={val => toggle('vibes', val)}
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Social & food media interests (what catches your eye?)</span>
+        <PillSelect
+          options={SOCIAL_INTERESTS}
+          selected={data.socialInterests}
+          onToggle={val => toggle('socialInterests', val)}
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Anything else about your taste or lifestyle?</span>
+        <textarea
+          className="input-area"
+          value={data.freeform}
+          onChange={e => setData(prev => ({ ...prev, freeform: e.target.value }))}
+          placeholder="e.g. I follow @eater, love natural wine, prefer chef's tasting menus, allergic to shellfish…"
+          rows={3}
+        />
+      </div>
+
+      <div className="nav-row">
+        <button className="btn-back" onClick={onBack}>← Back</button>
+        <button className="btn-next" onClick={onNext}>Continue →</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Step 4: Location & Final ─── */
+function Step4({ data, setData, onBack, onGenerate, loading, error, hasApiKey }) {
+  return (
+    <div>
+      <StepDots current={3} total={4} />
+      <p className="section-eyebrow">Step 4 of 4</p>
+      <h1 className="section-title display">Almost <span style={{fontStyle:'italic',color:'var(--amber)'}}>there</span></h1>
+      <p className="section-sub">Just a few last details so we can tailor suggestions to your exact context.</p>
+
+      {!hasApiKey && (
+        <div className="api-key-banner">
+          <strong>Note:</strong> To generate recommendations, you need an Anthropic API key. Get one free at <a href="https://console.anthropic.com" target="_blank" style={{color:'var(--amber)',textDecoration:'underline'}}>console.anthropic.com</a>
+        </div>
+      )}
+
+      <div className="field-block">
+        <span className="field-label">City / neighborhood you're dining in</span>
+        <input
+          className="tag-input"
+          style={{width:'100%'}}
+          value={data.location}
+          onChange={e => setData(prev => ({ ...prev, location: e.target.value }))}
+          placeholder="e.g. West Village, NYC · Shoreditch, London · Marais, Paris"
+        />
+      </div>
+
+      <div className="field-block">
+        <span className="field-label">Any special requests or context for tonight?</span>
+        <textarea
+          className="input-area"
+          value={data.context}
+          onChange={e => setData(prev => ({ ...prev, context: e.target.value }))}
+          placeholder="e.g. first date, want to impress, she's visiting from Tokyo, need outdoor seating, party of 6…"
+          rows={3}
+        />
+      </div>
+
+      {error && (
+        <div className="error-banner">
+          <strong>Something went wrong:</strong> {error}
+        </div>
+      )}
+
+      <div className="nav-row">
+        <button className="btn-back" onClick={onBack} disabled={loading}>← Back</button>
+        <button
+          className="btn-generate"
+          onClick={onGenerate}
+          disabled={loading || !data.location.trim() || !hasApiKey}
+          title={!hasApiKey ? 'API key required' : ''}
+        >
+          {loading ? (
+            <>
+              <div className="loading-ring" style={{width:20,height:20,borderWidth:2}} />
+              Curating…
+            </>
+          ) : (
+            <>✦ Generate My Recommendations</>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Results ─── */
+function Results({ recs, profile, onRestart }) {
+  const cuisineNames = (profile.cuisines || []).map(id => {
+    const c = CUISINES.find(x => x.id === id);
+    return c ? c.label : id;
+  });
+
+  return (
+    <div>
+      <div className="results-header">
+        <p className="section-eyebrow">Your Curated Picks</p>
+        <h1 className="section-title display">
+          Dining in <span style={{fontStyle:'italic',color:'var(--amber)'}}>{profile.location}</span>
+        </h1>
+        <div className="results-meta">
+          {cuisineNames.slice(0,3).map(c => (
+            <span key={c} className="results-chip chip-amber">{c}</span>
+          ))}
+          {(profile.dietary || []).filter(d => d !== 'No Restrictions').map(d => (
+            <span key={d} className="results-chip chip-sage">{d}</span>
+          ))}
+          {profile.avgSpend && (
+            <span className="results-chip chip-clay">
+              {'$'.repeat(profile.avgSpend <= 20 ? 1 : profile.avgSpend <= 45 ? 2 : profile.avgSpend <= 80 ? 3 : 4)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="rec-grid">
+        {recs.map((rec, i) => (
+          <div key={i} className="rec-card" style={{animationDelay:`${i*0.1}s`}}>
+            <div className="rec-top">
+              <div>
+                <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:4}}>
+                  <span className="rec-num">{String(i+1).padStart(2,'0')}</span>
+                  <span className="rec-name">{rec.name}</span>
+                </div>
+                {rec.cuisineType && (
+                  <div style={{fontSize:13,color:'var(--ink-muted)',marginLeft:46}}>
+                    {rec.cuisineType}
+                    {rec.priceRange && <span style={{marginLeft:8,color:'var(--amber)',fontWeight:500}}>{rec.priceRange}</span>}
+                  </div>
+                )}
+              </div>
+              {rec.matchScore && (
+                <span className="rec-match">{rec.matchScore}% match</span>
+              )}
+            </div>
+
+            {rec.tags && rec.tags.length > 0 && (
+              <div className="rec-tags">
+                {rec.tags.map(t => <span key={t} className="rec-tag">{t}</span>)}
+              </div>
+            )}
+
+            <p className="rec-reason">{rec.reason}</p>
+            {rec.orderThis && (
+              <p className="rec-highlight">✦ Try: {rec.orderThis}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div style={{marginTop:40,display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+        <button className="btn-restart" onClick={onRestart}>
+          ← Refine my profile
+        </button>
+        <span style={{fontSize:13,color:'var(--ink-faint)',fontStyle:'italic'}}>
+          Recommendations generated by AI — always verify hours & availability
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main App ─── */
+function App() {
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [recs, setRecs] = useState(null);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('anthropic_api_key') || '');
+
+  const [profile, setProfile] = useState({
+    cuisines: [],
+    dietary: [],
+    lovedPlaces: [],
+    favDishes: [],
+    dislikes: '',
+    avgSpend: 50,
+    vibes: [],
+    socialInterests: [],
+    freeform: '',
+    location: '',
+    context: '',
+  });
+
+  const buildPrompt = () => {
+    const cuisineNames = profile.cuisines.map(id => {
+      const c = CUISINES.find(x => x.id === id);
+      return c ? c.label : id;
+    });
+
+    return `You are an elite dining curator with encyclopedic knowledge of restaurants worldwide. Based on this diner's detailed profile, generate exactly 5 highly personalized restaurant recommendations.
+
+DINER PROFILE:
+- Location: ${profile.location}
+- Favorite cuisines: ${cuisineNames.join(', ') || 'open to anything'}
+- Dietary requirements: ${profile.dietary.join(', ') || 'none'}
+- Restaurants they've loved: ${profile.lovedPlaces.join(', ') || 'not specified'}
+- Favorite dishes/ingredients: ${profile.favDishes.join(', ') || 'not specified'}
+- Dislikes/avoids: ${profile.dislikes || 'nothing mentioned'}
+- Typical spend per person: $${profile.avgSpend}
+- Dining occasions: ${profile.vibes.join(', ') || 'not specified'}
+- Social/lifestyle interests: ${profile.socialInterests.join(', ') || 'not specified'}
+- Additional context: ${profile.freeform || 'none'}
+- Special context for today: ${profile.context || 'none'}
+
+Return ONLY a JSON array with exactly 5 objects. No preamble, no markdown, no explanation. Each object must have:
+{
+  "name": "Restaurant Name",
+  "cuisineType": "Cuisine type & style (e.g. Modern Japanese Omakase)",
+  "priceRange": "$$ or $$$ or $$$$ matching their budget",
+  "matchScore": integer 85-99,
+  "tags": ["tag1","tag2","tag3"] (3-4 short descriptors like "romantic", "open fire grill", "natural wine", "reservations essential"),
+  "reason": "2-3 sentence personalized explanation of WHY this fits them specifically — reference their profile details",
+  "orderThis": "The one dish or thing to order/experience"
+}
+
+Make recommendations that feel genuinely discovered and curated — not the obvious tourist picks. Mix well-known gems with lesser-known finds. Respect all dietary requirements strictly.`;
+  };
+
+  const generate = async () => {
+    if (!apiKey.trim()) {
+      setError('Please set your Anthropic API key first');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: buildPrompt() }],
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData.error?.message || errData.message || `API error ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      const text = data.content.map(b => b.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+
+      if (!Array.isArray(parsed)) throw new Error('Unexpected response format');
+      setRecs(parsed);
+      setStep(4);
+    } catch (err) {
+      setError(err.message || 'Failed to generate recommendations. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restart = () => {
+    setRecs(null);
+    setStep(0);
+    setError('');
+  };
+
+  const handleSetApiKey = () => {
+    const key = prompt('Enter your Anthropic API key:');
+    if (key) {
+      setApiKey(key);
+      localStorage.setItem('anthropic_api_key', key);
+    }
+  };
+
+  return (
+    <div className="app-shell">
+      <header className="header">
+        <div className="logo display">Taste<span>Craft</span></div>
+        {step < 4 && <span className="header-pill">AI-Powered Dining</span>}
+        {step === 4 && (
+          <button className="btn-restart" onClick={restart}>New search</button>
+        )}
+        {step < 4 && (
+          <button 
+            className="header-pill" 
+            style={{cursor:'pointer',background:'var(--ink-faint)',color:'var(--white)',border:'none',padding:'6px 12px'}}
+            onClick={handleSetApiKey}
+            title="Click to add API key"
+          >
+            {apiKey ? '✓ API Key Set' : '+ Add API Key'}
+          </button>
+        )}
+      </header>
+
+      <main className="main-content">
+        {step === 0 && (
+          <Step1
+            data={profile}
+            setData={setProfile}
+            onNext={() => setStep(1)}
+          />
+        )}
+        {step === 1 && (
+          <Step2
+            data={profile}
+            setData={setProfile}
+            onBack={() => setStep(0)}
+            onNext={() => setStep(2)}
+          />
+        )}
+        {step === 2 && (
+          <Step3
+            data={profile}
+            setData={setProfile}
+            onBack={() => setStep(1)}
+            onNext={() => setStep(3)}
+          />
+        )}
+        {step === 3 && (
+          <Step4
+            data={profile}
+            setData={setProfile}
+            onBack={() => setStep(2)}
+            onGenerate={generate}
+            loading={loading}
+            error={error}
+            hasApiKey={!!apiKey.trim()}
+          />
+        )}
+        {step === 4 && recs && (
+          <Results
+            recs={recs}
+            profile={profile}
+            onRestart={restart}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
