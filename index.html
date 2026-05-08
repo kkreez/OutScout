@@ -652,19 +652,6 @@
     line-height: 1.5;
   }
 
-  .api-key-banner {
-    padding: 16px 18px;
-    background: var(--amber-pale);
-    border: 1px solid rgba(212,137,42,0.3);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    color: var(--ink);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  .api-key-banner strong { color: var(--amber); }
-
   /* ── Responsive ── */
   @media (max-width: 600px) {
     .header { padding: 16px 20px; }
@@ -1013,7 +1000,6 @@ function Step4({ data, setData, onBack, onGenerate, loading, error }) {
           className="btn-generate"
           onClick={onGenerate}
           disabled={loading || !data.location.trim()}
-          title=""
         >
           {loading ? (
             <>
@@ -1165,28 +1151,19 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/recommendations', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': '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',
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2000,
-          messages: [{ role: 'user', content: buildPrompt() }],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: buildPrompt() }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        const msg = errData.error?.message || errData.message || `API error ${res.status}`;
-        throw new Error(msg);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request failed: ${response.status}`);
       }
 
-      const data = await res.json();
-      const text = data.content.map(b => b.text || '').join('');
+      const data = await response.json();
+      const text = data.text;
       const clean = text.replace(/```json|```/g, '').trim();
       const parsed = JSON.parse(clean);
 
