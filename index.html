@@ -1111,7 +1111,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [recs, setRecs] = useState(null);
-  const [apiKey] = useState('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');
 
   const [profile, setProfile] = useState({
     cuisines: [],
@@ -1163,11 +1162,6 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
   };
 
   const generate = async () => {
-    if (!apiKey.trim()) {
-      setError('API key not configured');
-      return;
-    }
-
     setLoading(true);
     setError('');
     try {
@@ -1175,7 +1169,7 @@ Make recommendations that feel genuinely discovered and curated — not the obvi
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': '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',
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
